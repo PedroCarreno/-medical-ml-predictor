@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # Backend API (Flask) - Sin base de datos
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    container_name: ml_medical_backend
+    environment:
+      - FLASK_ENV=development
+      - ML_MODEL_PATH=/app/models/trained_model.pkl
+      - DATASET_PATH=/app/data/dataset.csv
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./ml_service:/app/ml_service
+    ports:
+      - "8000:8000"
+    networks:
+      - ml_medical_network
+    command: python app.py
+
+  # Frontend (React/Vue o HTML estático con Nginx)
+  frontend:
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
+    container_name: ml_medical_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://backend:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - ml_medical_network
+
+  # Servicio ML Training (para entrenar modelos)
+  ml_trainer:
+    build:
+      context: ./ml_service
+      dockerfile: Dockerfile
+    container_name: ml_medical_trainer
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+      - ./ml_service:/app
+    networks:
+      - ml_medical_network
+    profiles:
+      - training  # Solo se ejecuta cuando se especifica el perfil
+
+networks:
+  ml_medical_network:
+    driver: bridge

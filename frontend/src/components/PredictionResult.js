@@ -1,0 +1,1 @@
+// Prediction result component - TO BE IMPLEMENTED

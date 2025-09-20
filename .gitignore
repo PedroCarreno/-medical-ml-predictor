@@ -1,0 +1,247 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+.conda/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# Models y datos sensibles
+models/*.pkl
+models/*.joblib
+models/*.model
+models/*.h5
+models/*.ckpt
+models/*.bin
+models/*.safetensors
+*.model
+*.h5
+*.ckpt
+*.bin
+*.safetensors
+checkpoints/
+wandb/
+mlruns/
+experiments/
+
+# Datos - MANTENER DATASET PRINCIPAL PÚBLICO PARA GITHUB
+# data/*.csv  # Comentamos para permitir dataset.csv en el repo
+data/processed/
+data/raw/
+data/temp/
+data/cache/
+data/*_processed.csv
+data/*_clean.csv
+data/*_augmented.csv
+data/*_split.csv
+data/splits/
+!dataset.csv
+
+# Large files
+*.gz
+*.tar
+*.zip
+*.7z
+*.rar
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+package-lock.json
+yarn.lock
+.npm
+.eslintcache
+.stylelintcache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+.node_repl_history
+*.tgz
+*.tar.gz
+.yarn-integrity
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.vercel/
+.next/
+out/
+build/
+dist/
+
+# Docker
+.docker/
+*.dockerignore
+docker-compose.override.yml
+docker-compose.*.yml
+!docker-compose.yml
+
+# IDE y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+.classpath
+.factorypath
+.buildpath
+.target
+.sts4-cache/
+.apt_generated
+.apt_generated_test
+.springBeans
+.sts4-cache
+.metadata
+.loadpath
+.externalToolBuilders/
+*.launch
+.pydevproject
+.cproject
+.autotools
+.sublime-workspace
+.sublime-project
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Logs
+*.log
+logs/
+log/
+*.log.*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-shm
+*.db-wal
+
+# Environment variables
+.env
+.env.*
+!.env.example
+.envrc
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
+*~
+
+# Security
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+secret.txt
+secrets/
+.secrets/
+
+# Configuration específica del usuario
+config.local.json
+config.local.yml
+settings.local.json
+
+# Archivos de sistema y metadatos
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Archivos específicos del proyecto que no deben subirse
+campos_dataset.txt
+EVIDENCIAS_PARA_PROFESORA.md
+COMO_USAR_TODO.md
+GUIA_TESTING_COMPLETA.md
+validacion_campos_frontend.txt
+docker_ml_setup.txt
+project_structure_setup.sh
+test-docker.bat
+
+# Documentos PDF
+*.pdf
+Dataset-Info.pdf
+
+# Archivos de configuración temporal
+.claude/
+
+# Documentación generada automáticamente que no corresponde al proyecto
+docs/

@@ -1,0 +1,202 @@
+# 🏥 Medical ML Predictor - Python Dependencies
+# ================================================
+
+# 📊 Core Data Science Stack
+pandas>=1.5.0
+numpy>=1.21.0
+scipy>=1.9.0
+
+# 🤖 Machine Learning Libraries
+scikit-learn>=1.1.0
+xgboost>=1.6.0
+tensorflow>=2.9.0
+keras>=2.9.0
+
+# 📈 Visualization Libraries
+matplotlib>=3.5.0
+seaborn>=0.11.0
+plotly>=5.10.0
+plotly-dash>=2.6.0
+
+# 🌐 Web Framework & API
+flask>=2.2.0
+flask-cors>=3.0.10
+flask-restx>=1.0.0
+gunicorn>=20.1.0
+
+# 🗄️ Database Libraries
+psycopg2-binary>=2.9.0
+sqlalchemy>=1.4.0
+alembic>=1.8.0
+
+# 📋 Data Validation & Processing
+pydantic>=1.10.0
+marshmallow>=3.17.0
+jsonschema>=4.9.0
+
+# 🔧 Utility Libraries
+python-dotenv>=0.20.0
+click>=8.1.0
+tqdm>=4.64.0
+joblib>=1.1.0
+
+# 📊 Statistical Analysis
+statsmodels>=0.13.0
+pingouin>=0.5.0
+
+# 🔍 Model Interpretability
+shap>=0.41.0
+lime>=0.2.0
+eli5>=0.13.0
+
+# 📱 Jupyter & Notebook Support
+jupyter>=1.0.0
+ipykernel>=6.15.0
+ipywidgets>=8.0.0
+notebook>=6.4.0
+
+# 🧪 Testing Framework
+pytest>=7.1.0
+pytest-cov>=3.0.0
+pytest-mock>=3.8.0
+
+# 🔒 Security & Authentication
+cryptography>=37.0.0
+pyjwt>=2.4.0
+
+# 📈 Monitoring & Logging
+loguru>=0.6.0
+prometheus-client>=0.14.0
+
+# 🚀 Production & Deployment
+redis>=4.3.0
+celery>=5.2.0
+flower>=1.2.0
+
+# 📝 Documentation
+sphinx>=5.1.0
+sphinx-rtd-theme>=1.0.0
+
+# 🔄 Development Tools
+black>=22.6.0
+flake8>=5.0.0
+isort>=5.10.0
+pre-commit>=2.20.0
+
+# 🌡️ Health Checks & Metrics
+psutil>=5.9.0
+memory-profiler>=0.60.0
+
+# 📊 Advanced Analytics (Optional)
+lightgbm>=3.3.0
+catboost>=1.0.0
+optuna>=3.0.0
+
+# 🔧 Additional Utilities
+requests>=2.28.0
+aiohttp>=3.8.0
+python-multipart>=0.0.5
+fastapi>=0.78.0  # Alternative to Flask
+
+# 📱 Streamlit (Alternative UI)
+streamlit>=1.12.0
+
+# 🎨 Additional Visualization
+bokeh>=2.4.0
+altair>=4.2.0
+
+# ⚡ Performance Optimization
+numba>=0.56.0
+dask>=2022.8.0
+
+# 🔐 Environment Variables
+python-decouple>=3.6
+
+# 📊 Time Series Analysis
+prophet>=1.1.0
+statsforecast>=1.0.0
+
+# 🌊 Stream Processing
+kafka-python>=2.0.0
+
+# 📦 Package Management
+pip-tools>=6.8.0
+
+# 🔍 Data Profiling
+pandas-profiling>=3.3.0
+great-expectations>=0.15.0
+
+# 🎯 ML Pipeline Orchestration
+mlflow>=1.28.0
+dvc>=2.12.0
+
+# 📊 Feature Engineering
+feature-engine>=1.4.0
+category-encoders>=2.5.0
+
+# 🔧 Configuration Management
+hydra-core>=1.2.0
+omegaconf>=2.2.0
+
+# 📈 Model Monitoring
+evidently>=0.2.0
+whylogs>=1.2.0
+
+# 🌐 API Documentation
+flasgger>=0.9.5
+apispec>=5.2.0
+
+# 🔒 Data Security
+cryptography>=37.0.0
+hashlib-compat>=1.0.0
+
+# 📱 Mobile & Cross-Platform
+kivy>=2.1.0
+
+# 🎨 UI Components
+gradio>=3.1.0
+voila>=0.3.0
+
+# ⚡ Async Support
+asyncio>=3.4.3
+aiofiles>=0.8.0
+
+# 📊 Business Intelligence
+pygwalker>=0.1.0
+sweetviz>=2.1.0
+
+# 🔧 Code Quality
+mypy>=0.971
+pylint>=2.14.0
+
+# 📦 Distribution
+setuptools>=65.0.0
+wheel>=0.37.0
+twine>=4.0.0
+
+# 🔄 Version Control Integration
+gitpython>=3.1.0
+
+# 📊 Reporting
+jinja2>=3.1.0
+weasyprint>=56.0
+
+# 🎯 Hyperparameter Optimization
+hyperopt>=0.2.7
+ray[tune]>=2.0.0
+
+# 📈 Real-time Analytics
+streamz>=0.6.0
+panel>=0.13.0
+
+# 🔍 Debugging
+pdb-clone>=1.10.0
+icecream>=2.1.0
+
+# 📊 Statistical Tests
+scipy>=1.9.0
+scikit-posthocs>=0.7.0
+
+# 🎨 Color Schemes
+colorcet>=3.0.0
+palettable>=3.3.0
