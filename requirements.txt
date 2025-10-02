@@ -16,7 +16,7 @@ keras>=2.9.0
 matplotlib>=3.5.0
 seaborn>=0.11.0
 plotly>=5.10.0
-plotly-dash>=2.6.0
+dash>=2.6.0
 
 # 🌐 Web Framework & API
 flask>=2.2.0
@@ -123,7 +123,7 @@ kafka-python>=2.0.0
 pip-tools>=6.8.0
 
 # 🔍 Data Profiling
-pandas-profiling>=3.3.0
+ydata-profiling>=4.0.0
 great-expectations>=0.15.0
 
 # 🎯 ML Pipeline Orchestration
@@ -148,7 +148,7 @@ apispec>=5.2.0
 
 # 🔒 Data Security
 cryptography>=37.0.0
-hashlib-compat>=1.0.0
+# hashlib-compat>=1.0.0  # Built-in module
 
 # 📱 Mobile & Cross-Platform
 kivy>=2.1.0
@@ -158,7 +158,7 @@ gradio>=3.1.0
 voila>=0.3.0
 
 # ⚡ Async Support
-asyncio>=3.4.3
+# asyncio>=3.4.3  # Built-in module
 aiofiles>=0.8.0
 
 # 📊 Business Intelligence
