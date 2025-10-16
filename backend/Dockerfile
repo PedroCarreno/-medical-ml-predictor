@@ -12,8 +12,8 @@ RUN apt-get update && apt-get install -y \
 # Copiar archivos de dependencias del backend
 COPY backend/requirements.txt .
 
-# Instalar dependencias de Python
-RUN pip install --no-cache-dir -r requirements.txt
+# Instalar dependencias de Python con timeout aumentado
+RUN pip install --default-timeout=1000 --no-cache-dir -r requirements.txt
 
 # Copiar código del backend
 COPY backend/ .

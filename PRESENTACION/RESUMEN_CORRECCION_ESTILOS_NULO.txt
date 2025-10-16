@@ -1,0 +1,135 @@
+================================================================================
+RESUMEN DE CORRECCIONES - FORMATO ROJO PARA VALORES "NULO"
+================================================================================
+
+PROBLEMA IDENTIFICADO:
+---------------------
+Al agregar .fillna('NULO') para convertir valores NaN en el string "NULO",
+las funciones de estilo que detectaban pd.isna() dejaron de funcionar porque
+ahora los valores son strings "NULO" en lugar de NaN.
+
+SOLUCIÓN IMPLEMENTADA:
+---------------------
+Se modificaron las funciones de estilo para detectar TANTO valores NaN COMO
+el string "NULO", asegurando que el formato visual se mantenga correctamente.
+
+================================================================================
+CELDAS MODIFICADAS
+================================================================================
+
+CELDA 7: highlight_nulls_red()
+------------------------------
+Propósito: Resaltar valores NULO en ROJO en el dataset original
+
+ANTES:
+    def highlight_nulls_red(val):
+        """Highlight NULO values in red"""
+        if pd.isna(val):
+            return 'background-color: #ffcccc; color: #cc0000; font-weight: bold'
+        return ''
+
+DESPUÉS:
+    def highlight_nulls_red(val):
+        """Highlight NULO values in red"""
+        if pd.isna(val) or val == 'NULO':
+            return 'background-color: #ffcccc; color: #cc0000; font-weight: bold'
+        return ''
+
+Cambio: Se agregó "or val == 'NULO'" para detectar el string NULO
+
+
+CELDA 22: highlight_filled_values()
+-----------------------------------
+Propósito: Resaltar en VERDE valores que fueron rellenados en el dataset limpio
+
+ANTES:
+    if pd.isna(orig_val) and pd.notna(current_val):
+        styles.append('background-color: #ccffcc; color: #006600; font-weight: bold')
+
+DESPUÉS:
+    if (pd.isna(orig_val) or orig_val == 'NULO') and (pd.notna(current_val) and current_val != 'NULO'):
+        styles.append('background-color: #ccffcc; color: #006600; font-weight: bold')
+
+Cambio:
+  - Agregado "or orig_val == 'NULO'" para detectar valores NULO originales
+  - Agregado "and current_val != 'NULO'" para asegurar que el valor fue realmente rellenado
+
+
+CELDA 22: Sección de estadísticas
+---------------------------------
+Propósito: Contar correctamente cuántos valores fueron rellenados
+
+ANTES:
+    if pd.isna(df_orig_for_compare.loc[idx, col]) and pd.notna(df_clean_display.loc[idx, col]):
+        total_filled += 1
+
+DESPUÉS:
+    orig_value = df_orig_for_compare.loc[idx, col]
+    clean_value = df_clean_display.loc[idx, col]
+    if (pd.isna(orig_value) or orig_value == 'NULO') and (pd.notna(clean_value) and clean_value != 'NULO'):
+        total_filled += 1
+
+Cambio: Misma lógica que highlight_filled_values para consistencia
+
+================================================================================
+RESULTADO ESPERADO
+================================================================================
+
+✓ Valores NULO se mostrarán con:
+  - Fondo rojo claro: #ffcccc
+  - Texto rojo oscuro: #cc0000
+  - Negrita
+
+✓ Valores rellenados se mostrarán con:
+  - Fondo verde claro: #ccffcc
+  - Texto verde oscuro: #006600
+  - Negrita
+
+✓ Columnas nuevas (encoding) se mostrarán con:
+  - Fondo azul claro: #cce5ff
+  - Texto azul oscuro: #004085
+  - Negrita
+
+✓ El .fillna('NULO') se mantiene intacto para visualización de texto
+
+================================================================================
+VERIFICACIÓN REALIZADA
+================================================================================
+
+Total de funciones de estilo encontradas: 2
+  ✓ highlight_nulls_red (Celda 7) - MODIFICADA
+  ✓ highlight_filled_values (Celda 22) - MODIFICADA
+
+Total de detecciones de "NULO" implementadas: 5
+  ✓ val == 'NULO' (en highlight_nulls_red)
+  ✓ orig_val == 'NULO' (en highlight_filled_values)
+  ✓ current_val != 'NULO' (en highlight_filled_values)
+  ✓ orig_value == 'NULO' (en sección estadísticas)
+  ✓ clean_value != 'NULO' (en sección estadísticas)
+
+================================================================================
+ARCHIVOS AFECTADOS
+================================================================================
+
+Archivo modificado:
+  d:\OneDrive\UTN\5\CienciaDeDatos_\medical-ml-predictor\PRESENTACION\presentacion_limpieza_dataset.ipynb
+
+Celdas modificadas:
+  - Celda 7 (código)
+  - Celda 22 (código)
+
+================================================================================
+PRÓXIMOS PASOS
+================================================================================
+
+1. Ejecutar el notebook completo para verificar que los estilos funcionan
+2. Verificar visualmente que:
+   - Valores NULO en dataset original aparecen en ROJO
+   - Valores rellenados en dataset limpio aparecen en VERDE
+   - Columnas nuevas (encoding) aparecen en AZUL
+
+3. Si se agregan más funciones de estilo en el futuro, recordar:
+   - SIEMPRE detectar tanto pd.isna(val) como val == 'NULO'
+   - Para verificar NO-NULO: pd.notna(val) and val != 'NULO'
+
+================================================================================

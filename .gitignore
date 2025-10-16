@@ -244,4 +244,8 @@ Dataset-Info.pdf
 .claude/
 
 # Documentación generada automáticamente que no corresponde al proyecto
-docs/
+docs/nul
+
+# Windows reserved filenames (nul, con, prn, aux, etc.)
+nul
+**/nul

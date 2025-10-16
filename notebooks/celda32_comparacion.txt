@@ -1,0 +1,158 @@
+if df_clean is not None:
+    print("🔄 TABLA COMPARATIVA LADO A LADO")
+    print("=" * 60)
+    
+    # ANÁLISIS COMPLETO DE COLUMNAS PRIMERO
+    print("📊 ANÁLISIS COMPLETO DE COLUMNAS:")
+    print("-" * 50)
+    
+    cols_originales = set(df_original.columns)
+    cols_limpias = set(df_clean.columns)
+    
+    eliminadas = cols_originales - cols_limpias
+    agregadas = cols_limpias - cols_originales
+    comunes = cols_originales & cols_limpias
+    
+    print(f"   • Dataset original: {len(df_original.columns)} columnas")
+    print(f"   • Dataset limpio: {len(df_clean.columns)} columnas")
+    print(f"   • Columnas eliminadas: {len(eliminadas)}")
+    print(f"   • Columnas agregadas: {len(agregadas)}")
+    print(f"   • Columnas que se mantuvieron: {len(comunes)}")
+    
+    if eliminadas:
+        print(f"\\n🗑️ COLUMNAS ELIMINADAS ({len(eliminadas)}):")
+        for col in sorted(eliminadas):
+            print(f"   • {col}")
+            
+    if agregadas:
+        print(f"\\n➕ TODAS LAS COLUMNAS AGREGADAS ({len(agregadas)}):")
+        for col in sorted(agregadas):
+            if col.endswith('_encoded'):
+                original_col = col.replace('_encoded', '')
+                if original_col in df_clean.columns:
+                    unique_values = df_clean[col].nunique()
+                    print(f"   • {col} ← codificación de '{original_col}' ({unique_values} valores únicos)")
+                else:
+                    print(f"   • {col} (columna codificada)")
+            else:
+                print(f"   • {col}")
+    
+    # Ahora la comparación de columnas clave
+    print(f"\\n📋 COMPARACIÓN DE COLUMNAS CLAVE - PRIMERAS 20 FILAS:")
+    print("=" * 60)
+    
+    # Seleccionar columnas clave para la comparación (SIN encounter_id que fue eliminado)
+    columnas_clave = ['age', 'bmi', 'weight', 'height', 'gender', 'ethnicity', 
+                     'apache_4a_hospital_death_prob', 'hospital_death']
+    
+    # Filtrar solo las columnas que existen en ambos datasets
+    columnas_disponibles = [col for col in columnas_clave if col in df_original.columns and col in df_clean.columns]
+    
+    print(f"📊 Mostrando comparación para estas columnas importantes:")
+    for i, col in enumerate(columnas_disponibles, 1):
+        print(f"   {i}. {col}")
+    
+    # Tomar las primeras 20 filas de las columnas seleccionadas
+    df_orig_subset = df_original[columnas_disponibles].head(20).copy()
+    df_clean_subset = df_clean[columnas_disponibles].head(20).copy()
+    
+    # Crear tabla comparativa
+    print("\\n📊 DATASET ORIGINAL (columnas seleccionadas):")
+    print("-" * 50)
+    display(df_orig_subset)
+    
+    print("\\n📊 DATASET LIMPIO (columnas seleccionadas):")
+    print("-" * 50) 
+    display(df_clean_subset)
+    
+    # Crear una tabla que muestre solo los cambios
+    print("\\n🔍 RESUMEN DE CAMBIOS DETECTADOS EN ESTAS COLUMNAS:")
+    print("-" * 60)
+    
+    cambios_detectados = []
+    
+    for idx in range(min(20, len(df_original), len(df_clean))):
+        for col in columnas_disponibles:
+            valor_orig = df_orig_subset.iloc[idx][col] if idx < len(df_orig_subset) else None
+            valor_limpio = df_clean_subset.iloc[idx][col] if idx < len(df_clean_subset) else None
+            
+            # Detectar cambios
+            if pd.isna(valor_orig) and not pd.isna(valor_limpio):
+                cambios_detectados.append({
+                    'Fila': idx,
+                    'Columna': col,
+                    'Cambio': 'IMPUTADO',
+                    'Antes': 'NaN',
+                    'Después': valor_limpio,
+                    'Tipo': 'Missing → Valor'
+                })
+            elif str(valor_orig) != str(valor_limpio) and not (pd.isna(valor_orig) and pd.isna(valor_limpio)):
+                cambios_detectados.append({
+                    'Fila': idx,
+                    'Columna': col,
+                    'Cambio': 'MODIFICADO',
+                    'Antes': valor_orig,
+                    'Después': valor_limpio,
+                    'Tipo': 'Valor → Valor'
+                })
+    
+    if cambios_detectados:
+        df_cambios = pd.DataFrame(cambios_detectados)
+        print(f"✅ Se detectaron {len(cambios_detectados)} cambios en las primeras 20 filas:")
+        display(df_cambios)
+    else:
+        print("ℹ️ No se detectaron cambios en las columnas seleccionadas para las primeras 20 filas")
+        print("   💡 Esto es normal: muchos valores faltantes pueden estar en otras filas")
+    
+    # Estadísticas adicionales - SOLO para columnas numéricas con missing values
+    print(f"\\n📈 ESTADÍSTICAS DE IMPUTACIÓN:")
+    print("-" * 40)
+    
+    total_imputaciones = 0
+    columnas_con_imputacion = 0
+    
+    for col in df_original.columns:
+        if df_original[col].dtype in ['int64', 'float64']:
+            missing_orig = df_original[col].isnull().sum()
+            
+            if missing_orig > 0 and col in df_clean.columns:
+                missing_clean = df_clean[col].isnull().sum()
+                imputados = missing_orig - missing_clean
+                
+                if imputados > 0:
+                    columnas_con_imputacion += 1
+                    total_imputaciones += imputados
+                    median_val = df_original[col].median()
+                    print(f"\\n📊 {col}:")
+                    print(f"   • Missing original: {missing_orig:,}")
+                    print(f"   • Missing después: {missing_clean:,}")
+                    print(f"   • Valores imputados: {imputados:,}")
+                    print(f"   • Valor usado (mediana): {median_val}")
+    
+    print(f"\\n📊 RESUMEN TOTAL:")
+    print(f"   • Columnas numéricas imputadas: {columnas_con_imputacion}")
+    print(f"   • Total valores imputados: {total_imputaciones:,}")
+    
+    # Mostrar TODAS las columnas encoded agregadas
+    encoded_cols = [col for col in df_clean.columns if col.endswith('_encoded')]
+    if encoded_cols:
+        print(f"\\n🔢 TODAS LAS COLUMNAS CODIFICADAS AGREGADAS ({len(encoded_cols)}):")
+        print("-" * 60)
+        
+        for i, col in enumerate(encoded_cols, 1):
+            original_col = col.replace('_encoded', '')
+            if original_col in df_clean.columns:
+                unique_orig = df_clean[original_col].nunique()
+                unique_encoded = df_clean[col].nunique()
+                print(f"   {i:2d}. {col}")
+                print(f"       ← codifica '{original_col}' ({unique_orig} categorías → {unique_encoded} números)")
+        
+        print(f"\\n📋 MUESTRA DE COLUMNAS ENCODED (primeras 10 filas):")
+        df_encoded_sample = df_clean[encoded_cols[:5]].head(10)  # Solo las primeras 5 para no saturar
+        display(df_encoded_sample)
+        
+        print("📝 Estas columnas permiten que los algoritmos de ML procesen variables categóricas")
+        print(f"📝 Total de nuevas columnas agregadas: {len(encoded_cols)}")
+
+else:
+    print("❌ No se puede mostrar la comparación sin el dataset limpio")

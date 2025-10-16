@@ -1,0 +1,619 @@
+================================================================================
+CELDA 28 - JUSTIFICACIÓN DE METODOLOGÍAS (CÓDIGO)
+================================================================================
+from IPython.display import HTML, display
+import pandas as pd
+import numpy as np
+
+# Calcular estadísticas reales del dataset
+age_data = df_original['age'].dropna()
+mean_age = age_data.mean()
+median_age = age_data.median()
+
+# Calcular impacto de eliminar filas
+filas_con_missing = df_original.isnull().any(axis=1).sum()
+pct_filas_missing = (filas_con_missing / len(df_original)) * 100
+
+# Analizar comorbilidades
+comorbilidades = ['aids', 'cirrhosis', 'diabetes_mellitus', 'hepatic_failure', 
+                  'immunosuppression', 'leukemia', 'lymphoma', 'solid_tumor_with_metastasis']
+comorbilidades_data = []
+for col in comorbilidades:
+    if col in df_original.columns:
+        missing_count = df_original[col].isnull().sum()
+        positive_count = (df_original[col] == 1).sum()
+        total_known = len(df_original) - missing_count
+        prevalence = (positive_count / total_known) * 100 if total_known > 0 else 0
+        comorbilidades_data.append({
+            'nombre': col,
+            'missing': missing_count,
+            'positivos': positive_count,
+            'prevalencia': prevalence
+        })
+
+# Crear HTML con diseño profesional y lenguaje simple
+html_content = f"""
+<style>
+    .justification-container {{
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 1200px;
+        margin: 20px auto;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 3px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }}
+    .justification-inner {{
+        background: white;
+        padding: 30px;
+        border-radius: 13px;
+    }}
+    .justification-title {{
+        text-align: center;
+        font-size: 32px;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }}
+    .justification-subtitle {{
+        text-align: center;
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 30px;
+        font-style: italic;
+    }}
+    .section {{
+        margin: 30px 0;
+        padding: 25px;
+        background: linear-gradient(to right, #f8f9fa, #ffffff);
+        border-left: 5px solid #667eea;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }}
+    .section-title {{
+        font-size: 24px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }}
+    .section-number {{
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        font-weight: bold;
+    }}
+    .example-box {{
+        background: #fff3cd;
+        border: 2px solid #ffc107;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+    }}
+    .example-title {{
+        font-size: 18px;
+        font-weight: bold;
+        color: #856404;
+        margin-bottom: 15px;
+    }}
+    .example-scenario {{
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+        font-size: 16px;
+        line-height: 1.8;
+    }}
+    .comparison-visual {{
+        display: flex;
+        gap: 20px;
+        margin: 20px 0;
+        flex-wrap: wrap;
+    }}
+    .comparison-card {{
+        flex: 1;
+        min-width: 250px;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        text-align: center;
+    }}
+    .comparison-bad {{
+        border: 3px solid #dc3545;
+    }}
+    .comparison-good {{
+        border: 3px solid #28a745;
+    }}
+    .comparison-label {{
+        font-size: 14px;
+        font-weight: bold;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }}
+    .comparison-bad .comparison-label {{
+        color: #dc3545;
+    }}
+    .comparison-good .comparison-label {{
+        color: #28a745;
+    }}
+    .comparison-value {{
+        font-size: 48px;
+        font-weight: bold;
+        margin: 15px 0;
+    }}
+    .comparison-bad .comparison-value {{
+        color: #dc3545;
+    }}
+    .comparison-good .comparison-value {{
+        color: #28a745;
+    }}
+    .comparison-desc {{
+        font-size: 14px;
+        color: #666;
+        line-height: 1.6;
+    }}
+    .reason-list {{
+        margin: 15px 0;
+    }}
+    .reason-item {{
+        display: flex;
+        align-items: start;
+        margin: 12px 0;
+        padding: 12px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }}
+    .reason-icon {{
+        font-size: 24px;
+        margin-right: 15px;
+        flex-shrink: 0;
+    }}
+    .reason-text {{
+        font-size: 16px;
+        color: #444;
+        line-height: 1.6;
+    }}
+    .highlight-box {{
+        background: linear-gradient(135deg, #667eea15, #764ba215);
+        border: 2px solid #667eea;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+    }}
+    .highlight-title {{
+        font-size: 18px;
+        font-weight: bold;
+        color: #667eea;
+        margin-bottom: 15px;
+    }}
+    .comparison-table {{
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        overflow: hidden;
+        background: white;
+    }}
+    .comparison-table th {{
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 15px;
+        text-align: left;
+        font-weight: bold;
+        font-size: 15px;
+    }}
+    .comparison-table td {{
+        padding: 15px;
+        border-bottom: 2px solid #e0e0e0;
+        font-size: 16px;
+        font-weight: 600;
+        color: #222;
+    }}
+    .comparison-table tr:nth-child(even) {{
+        background: #f8f9fa;
+    }}
+    .comparison-table tr:hover {{
+        background: #e3f2fd;
+    }}
+    .disease-name {{
+        font-weight: 700;
+        color: #333;
+        font-size: 17px;
+    }}
+    .missing-data {{
+        color: #dc3545;
+        font-weight: 700;
+    }}
+    .positive-cases {{
+        color: #28a745;
+        font-weight: 700;
+    }}
+    .prevalence {{
+        color: #667eea;
+        font-weight: 700;
+        font-size: 17px;
+    }}
+    .method-badge {{
+        display: inline-block;
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: bold;
+        margin: 5px;
+    }}
+    .badge-mediana {{
+        background: #667eea;
+        color: white;
+    }}
+    .badge-moda {{
+        background: #f093fb;
+        color: white;
+    }}
+    .badge-ausente {{
+        background: #4facfe;
+        color: white;
+    }}
+    .visual-example {{
+        background: #e3f2fd;
+        border: 2px solid #2196f3;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+    }}
+    .visual-patients {{
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 15px 0;
+        flex-wrap: wrap;
+    }}
+    .patient-icon {{
+        font-size: 30px;
+    }}
+    .arrow {{
+        font-size: 24px;
+        color: #667eea;
+        margin: 0 10px;
+    }}
+    .summary-box {{
+        background: linear-gradient(135deg, #11998e, #38ef7d);
+        color: white;
+        padding: 25px;
+        border-radius: 10px;
+        margin-top: 30px;
+        text-align: center;
+    }}
+    .summary-title {{
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }}
+    .summary-text {{
+        font-size: 16px;
+        line-height: 1.8;
+    }}
+</style>
+
+<div class="justification-container">
+    <div class="justification-inner">
+        <div class="justification-title">🔬 ¿Cómo Rellenamos los Datos Faltantes?</div>
+        <div class="justification-subtitle">Explicación simple de nuestras decisiones científicas</div>
+        
+        <!-- SECCIÓN 1: MEDIANA vs PROMEDIO -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-number">1</div>
+                ¿Por qué usamos el VALOR DEL MEDIO en lugar del PROMEDIO?
+            </div>
+            
+            <div class="highlight-box">
+                <div class="highlight-title">📊 ¿Qué hicimos?</div>
+                <p style="font-size: 16px; color: #444; margin: 10px 0;">
+                    <span class="method-badge badge-mediana">VALOR DEL MEDIO</span>
+                    Cuando faltaba un dato numérico (edad, peso, presión, etc.), lo rellenamos con el <strong>valor del medio</strong> de todos los pacientes
+                </p>
+            </div>
+            
+            <div class="example-box">
+                <div class="example-title">💡 EJEMPLO SIMPLE: Imaginá 5 pacientes en la UCI</div>
+                <div class="visual-example">
+                    <div class="visual-patients">
+                        <span class="patient-icon">🧑</span> <strong>18 años</strong>
+                        <span class="patient-icon">👨</span> <strong>65 años</strong>
+                        <span class="patient-icon">👵</span> <strong>70 años</strong>
+                        <span class="patient-icon">👴</span> <strong>72 años</strong>
+                        <span class="patient-icon">🧓</span> <strong>95 años</strong>
+                    </div>
+                </div>
+                
+                <div class="comparison-visual">
+                    <div class="comparison-card comparison-bad">
+                        <div class="comparison-label">❌ Si usamos PROMEDIO</div>
+                        <div class="comparison-value">{mean_age:.0f}</div>
+                        <div class="comparison-desc">
+                            Suma todo y divide: (18+65+70+72+95) ÷ 5 = {mean_age:.0f} años<br><br>
+                            <strong>PROBLEMA:</strong> El paciente de 18 años "tira para abajo" el promedio. No representa bien a la mayoría.
+                        </div>
+                    </div>
+                    
+                    <div class="comparison-card comparison-good">
+                        <div class="comparison-label">✅ Si usamos VALOR DEL MEDIO</div>
+                        <div class="comparison-value">{median_age:.0f}</div>
+                        <div class="comparison-desc">
+                            Ordena y agarra el del medio: 18, 65, <strong>70</strong>, 72, 95<br><br>
+                            <strong>VENTAJA:</strong> 70 años representa mejor a la mayoría de pacientes UCI (adultos mayores).
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="example-scenario">
+                    <strong>🎯 ¿Qué pasa si falta la edad de un paciente?</strong><br>
+                    En lugar de inventar un número al azar, le ponemos <strong>{median_age:.0f} años</strong> (la edad típica de pacientes UCI).
+                    <br><br>
+                    <strong>¿Por qué {median_age:.0f} y no {mean_age:.0f}?</strong><br>
+                    Porque hay 170 pacientes muy jóvenes (casos raros) que hacen bajar el promedio. 
+                    El valor del medio ({median_age:.0f}) ignora esos casos extremos y representa mejor al "paciente típico de UCI".
+                </div>
+            </div>
+            
+            <div class="reason-list">
+                <div class="reason-item">
+                    <div class="reason-icon">✅</div>
+                    <div class="reason-text">
+                        <strong>No se distorsiona por casos raros:</strong> Si hay un paciente de 120 años, el promedio se altera. El valor del medio no.
+                    </div>
+                </div>
+                <div class="reason-item">
+                    <div class="reason-icon">✅</div>
+                    <div class="reason-text">
+                        <strong>Representa al paciente típico:</strong> {median_age:.0f} años es la edad más común en UCI. Tiene sentido médico.
+                    </div>
+                </div>
+                <div class="reason-item">
+                    <div class="reason-icon">✅</div>
+                    <div class="reason-text">
+                        <strong>Así rellenamos TODAS las variables numéricas:</strong> Peso, altura, presión arterial, frecuencia cardíaca, temperatura, glucosa, potasio, etc.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECCIÓN 2: NO ELIMINAR FILAS -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-number">2</div>
+                ¿Por qué NO eliminamos pacientes con datos faltantes?
+            </div>
+            
+            <div class="example-box">
+                <div class="example-title">💡 EJEMPLO: Pensá en 100 pacientes</div>
+                <div class="visual-example">
+                    <p style="font-size: 16px; margin: 15px 0;">
+                        Tenemos <strong>{len(df_original):,} pacientes</strong> en total.<br>
+                        Si eliminamos todos los que tienen <strong>aunque sea 1 dato faltante</strong>...
+                    </p>
+                    
+                    <div class="comparison-visual">
+                        <div class="comparison-card comparison-bad">
+                            <div class="comparison-label">❌ Pacientes eliminados</div>
+                            <div class="comparison-value">{filas_con_missing:,}</div>
+                            <div class="comparison-desc">
+                                <strong>{pct_filas_missing:.1f}% del dataset se pierde!</strong><br><br>
+                                Eso significa que quedamos sin datos para entrenar el modelo.
+                            </div>
+                        </div>
+                        
+                        <div class="comparison-card comparison-good">
+                            <div class="comparison-label">✅ Pacientes conservados</div>
+                            <div class="comparison-value">{len(df_original) - filas_con_missing:,}</div>
+                            <div class="comparison-desc">
+                                Solo quedarían estos pacientes con historia clínica "perfecta".<br><br>
+                                <strong>INSUFICIENTE</strong> para entrenar el modelo.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="reason-list">
+                <div class="reason-item">
+                    <div class="reason-icon">❌</div>
+                    <div class="reason-text">
+                        <strong>Perderíamos casi TODOS los pacientes:</strong> {filas_con_missing:,} casos valiosos se irían a la basura. No podemos entrenar modelos sin datos.
+                    </div>
+                </div>
+                <div class="reason-item">
+                    <div class="reason-icon">❌</div>
+                    <div class="reason-text">
+                        <strong>Solo quedarían los "pacientes perfectos":</strong> En la vida real, las historias clínicas tienen datos faltantes. Eliminarlos crea un modelo irreal.
+                    </div>
+                </div>
+                <div class="reason-item">
+                    <div class="reason-icon">✅</div>
+                    <div class="reason-text">
+                        <strong>Mejor solución:</strong> Rellenar inteligentemente los datos faltantes para conservar todos los pacientes y sus historias.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECCIÓN 3: VARIABLES CATEGÓRICAS -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-number">3</div>
+                ¿Cómo rellenamos datos de TEXTO (género, etnia, tipo de UCI)?
+            </div>
+            
+            <div class="highlight-box">
+                <div class="highlight-title">📊 ¿Qué hicimos?</div>
+                <p style="font-size: 16px; color: #444; margin: 10px 0;">
+                    <span class="method-badge badge-moda">VALOR MÁS COMÚN</span>
+                    Cuando faltaba un dato de texto, usamos el <strong>valor más frecuente</strong> (el que más se repite)
+                </p>
+            </div>
+            
+            <div class="example-box">
+                <div class="example-title">💡 EJEMPLO: Género de los pacientes</div>
+                <div class="visual-example">
+                    <p style="font-size: 16px; margin: 15px 0;">
+                        De 100 pacientes:<br>
+                        👨👨👨👨👨👨 <strong>54 son hombres (M)</strong><br>
+                        👩👩👩👩👩 <strong>46 son mujeres (F)</strong>
+                    </p>
+                    
+                    <div class="example-scenario">
+                        <strong>🎯 Si falta el género de un paciente:</strong><br>
+                        Le ponemos <strong>M (Masculino)</strong> porque es el más común.<br><br>
+                        
+                        <strong>¿Por qué tiene sentido?</strong><br>
+                        Estadísticamente, hay más probabilidad de que sea hombre (54% vs 46%). Es la mejor "adivinanza" posible.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="reason-list">
+                <div class="reason-item">
+                    <div class="reason-icon">✅</div>
+                    <div class="reason-text">
+                        <strong>Máxima probabilidad:</strong> Si el 77% de pacientes son "Caucásicos", tiene más sentido poner eso que otra etnia aleatoria.
+                    </div>
+                </div>
+                <div class="reason-item">
+                    <div class="reason-icon">✅</div>
+                    <div class="reason-text">
+                        <strong>Así rellenamos TODAS las variables de texto:</strong> Género, etnia, tipo de UCI, origen del paciente, sistema corporal afectado, etc.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- SECCIÓN 4: COMORBILIDADES -->
+        <div class="section">
+            <div class="section-title">
+                <div class="section-number">4</div>
+                ¿Cómo rellenamos ENFERMEDADES GRAVES (diabetes, SIDA, cáncer)?
+            </div>
+            
+            <div class="highlight-box">
+                <div class="highlight-title">🏥 Regla Médica</div>
+                <p style="font-size: 18px; color: #333; margin: 10px 0; font-weight: bold;">
+                    "Si no está en la historia clínica, se asume que NO lo tiene"
+                </p>
+                <p style="font-size: 14px; color: #666; margin-top: 10px;">
+                    <span class="method-badge badge-ausente">NO PRESENTE = 0</span>
+                    Aplicado a 8 enfermedades graves
+                </p>
+            </div>
+            
+            <div class="example-box">
+                <div class="example-title">💡 EJEMPLO: Diabetes de un paciente</div>
+                <div class="visual-example">
+                    <div class="example-scenario">
+                        <strong>Situación 1 - Paciente con diabetes documentada:</strong><br>
+                        Historia clínica dice: "Paciente con diabetes mellitus tipo 2"<br>
+                        <span class="arrow">→</span> <strong>diabetes = 1 (SÍ tiene)</strong>
+                        <br><br>
+                        
+                        <strong>Situación 2 - Historia clínica no menciona diabetes:</strong><br>
+                        Historia clínica: no hay información sobre diabetes<br>
+                        <span class="arrow">→</span> <strong>diabetes = 0 (NO tiene)</strong>
+                        <br><br>
+                        
+                        <strong>¿Por qué asumimos que NO tiene?</strong><br>
+                        Porque los médicos <strong>siempre documentan enfermedades graves</strong>. Si no está escrito, es porque no lo tiene.
+                    </div>
+                </div>
+            </div>
+            
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Enfermedad Grave</th>
+                        <th>Datos Faltantes</th>
+                        <th>Pacientes que SÍ la tienen</th>
+                        <th>% que la tiene</th>
+                    </tr>
+                </thead>
+                <tbody>"""
+
+for com in comorbilidades_data:
+    nombre_simple = com['nombre'].replace('_', ' ').replace('mellitus', '').replace('with metastasis', 'metastásico').title()
+    html_content += f"""
+                    <tr>
+                        <td class="disease-name">{nombre_simple}</td>
+                        <td class="missing-data">{com['missing']:,} → 0 (No tiene)</td>
+                        <td class="positive-cases">{com['positivos']:,} pacientes</td>
+                        <td class="prevalence">{com['prevalencia']:.1f}%</td>
+                    </tr>"""
+
+html_content += f"""
+                </tbody>
+            </table>
+            
+            <div class="reason-list">
+                <div class="reason-item">
+                    <div class="reason-icon">✅</div>
+                    <div class="reason-text">
+                        <strong>Los médicos siempre anotan lo importante:</strong> Si un paciente tiene SIDA o cáncer, está en su historia clínica SÍ o SÍ.
+                    </div>
+                </div>
+                <div class="reason-item">
+                    <div class="reason-icon">✅</div>
+                    <div class="reason-text">
+                        <strong>Las enfermedades graves son raras:</strong> Solo 0.1% tiene SIDA, 2% tiene cáncer. La mayoría NO las tiene. Si no está documentado, es porque no lo tiene.
+                    </div>
+                </div>
+                <div class="reason-item">
+                    <div class="reason-icon">✅</div>
+                    <div class="reason-text">
+                        <strong>Es más seguro asumir "NO tiene":</strong> Mejor equivocarnos por conservadores que inflar artificialmente los riesgos.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- RESUMEN FINAL -->
+        <div class="summary-box">
+            <div class="summary-title">✅ Resumen: ¿Cómo Rellenamos los Datos?</div>
+            <div class="summary-text">
+                🔢 <strong>Números (edad, peso, presión, etc.):</strong> Valor del medio de todos los pacientes<br>
+                📝 <strong>Texto (género, etnia, tipo UCI, etc.):</strong> El valor más común<br>
+                🏥 <strong>Enfermedades graves:</strong> Si no está documentado = NO tiene<br><br>
+                <strong>Resultado:</strong> {len(df_original):,} pacientes completos, sin datos faltantes, listos para entrenar modelos 🎯
+            </div>
+        </div>
+    </div>
+</div>
+"""
+
+display(HTML(html_content))
+
+
+
+================================================================================
+CELDA 22 - ENCODING DE VARIABLES CATEGÓRICAS (MARKDOWN)
+================================================================================
+### 🔢 ¿Por qué se codifican las variables categóricas?
+
+**Problema**: Los algoritmos de ML solo entienden números, no texto.
+- `gender`: "M", "F" → No se puede calcular
+- `ethnicity`: "CAUCASIAN", "AFRICAN AMERICAN" → No se puede procesar
+
+**Solución**: Label Encoding convierte texto en números:
+- `gender_encoded`: "M"→0, "F"→1  
+- `ethnicity_encoded`: "CAUCASIAN"→0, "AFRICAN AMERICAN"→1, etc.
+
+**Resultado**: Ahora los algoritmos pueden procesar estas variables para hacer predicciones.

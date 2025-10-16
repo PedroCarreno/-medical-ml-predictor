@@ -1,0 +1,22 @@
+Celda 33 (markdown)
+---
+
+# 🎓 FIN DE LA PRESENTACIÓN
+
+## **¡Dataset médico completamente limpio y listo para Machine Learning!**
+
+### 📁 Archivos generados:
+- `../data/dataset_clean_final.csv` - Dataset limpio y completo
+- Este notebook - Documentación completa del proceso
+
+### 🏆 Resultados obtenidos:
+- ✅ **100% completitud** - Sin valores faltantes
+- ✅ **91,713 pacientes** preservados
+- ✅ **Metodología científicamente justificada**
+- ✅ **Listo para predicción de supervivencia**
+
+---
+
+*Presentación preparada para exposición académica*  
+*Ciencia de Datos - UTN*  
+*Proyecto: Predicción de Supervivencia Hospitalaria UCI*

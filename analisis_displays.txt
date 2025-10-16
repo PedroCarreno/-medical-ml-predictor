@@ -1,0 +1,62 @@
+ANALISIS DE CELDAS CON display()
+================================================================================
+
+================================================================================
+CELDA 7
+================================================================================
+[YA OK] Linea 30: df_styled = df_display.fillna('NULO').style.applymap(highlight_nulls_red)
+[FALTA] Linea 31: display(df_styled)
+
+  >> Tiene df_styled
+
+================================================================================
+CELDA 9
+================================================================================
+[FALTA] Linea 41:     missing_display = missing_df[['Columna', 'Valores_Faltantes', 'Porcentaje', 'Severidad', 'Tipo_D
+[FALTA] Linea 42:     missing_display['Porcentaje'] = missing_display['Porcentaje'].round(2)
+[YA OK] Linea 45:     missing_display = missing_display.fillna('NULO')
+[FALTA] Linea 46:     display(missing_display)
+
+  >> Tiene display(missing_display)
+
+================================================================================
+CELDA 22
+================================================================================
+[YA OK] Linea 28:     df_clean_styled = df_clean_display.fillna('NULO').style.apply(highlight_filled_values, axis=1)
+[FALTA] Linea 29:     display(df_clean_styled)
+
+  >> Tiene df_clean_styled
+
+================================================================================
+CELDA 24
+================================================================================
+[FALTA] Linea 14:     display(HTML("""
+[FALTA] Linea 38:     display(HTML(f"""
+[FALTA] Linea 207:     display(HTML(f"""
+[FALTA] Linea 233:         display(HTML(html_eliminadas))
+[FALTA] Linea 235:         display(HTML("<p style='color: #000000; font-style: italic;'>• Ninguna columna eliminada</p>
+[FALTA] Linea 237:     display(HTML("</div>"))
+[FALTA] Linea 239:     display(HTML(f"""
+[FALTA] Linea 276:         display(HTML(html_agregadas))
+[FALTA] Linea 278:         display(HTML("<p style='color: #000000; font-style: italic;'>• Ninguna columna agregada</p>"
+[FALTA] Linea 280:     display(HTML("</div>"))
+[FALTA] Linea 285:     display(HTML(f"""
+[FALTA] Linea 307:     display(HTML("""
+
+================================================================================
+CELDA 29
+================================================================================
+[FALTA] Linea 587: display(HTML(html_content))
+
+================================================================================
+CELDA 33
+================================================================================
+[FALTA] Linea 87: df_resumen = pd.DataFrame(resumen_imputaciones)
+[FALTA] Linea 88: df_resumen = df_resumen.sort_values('Nulls Original', ascending=False)
+[YA OK] Linea 91: display(df_resumen.fillna('NULO').style\
+[YA OK] Linea 110: display(df_original.loc[indices_con_nulls, columnas_ejemplo].fillna('NULO'))
+[YA OK] Linea 113: display(df_clean.loc[indices_con_nulls, columnas_ejemplo].fillna('NULO'))
+
+  >> Tiene display(df_original.loc[...])
+
+  >> Tiene display(df_clean.loc[...])

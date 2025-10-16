@@ -1,0 +1,124 @@
+Total celdas: 36
+
+================================================================================
+ESTRUCTURA DEL NOTEBOOK
+================================================================================
+
+Celda 0 [MARKDOWN]:
+  Título: # 🏥 PRESENTACIÓN: LIMPIEZA DE DATASET MÉDICO
+  Caracteres: 207
+
+Celda 1 [MARKDOWN]:
+  Título: ## 📋 CONTENIDO DE LA PRESENTACIÓN
+  Caracteres: 508
+
+Celda 2 [MARKDOWN]:
+  Título: ## 1️⃣ ANÁLISIS DEL DATASET ORIGINAL
+  Caracteres: 75
+
+Celda 3 [CODE]: 284 caracteres
+
+Celda 4 [MARKDOWN]:
+  Título: ### 📊 Carga y primera exploración del dataset
+  Caracteres: 45
+
+Celda 5 [CODE]: 935 caracteres
+
+Celda 6 [MARKDOWN]:
+  Título: ### 🔍 Visualización de las primeras 20 filas del dataset
+  Caracteres: 56
+
+Celda 7 [CODE]: 1548 caracteres
+
+Celda 8 [MARKDOWN]:
+  Título: ## 2️⃣ IDENTIFICACIÓN DETALLADA DE VALORES FALTANTES
+  Caracteres: 98
+
+Celda 9 [CODE]: 3447 caracteres
+
+Celda 10 [MARKDOWN]:
+  Título: ### 📊 Visualización de la distribución de valores faltantes
+  Caracteres: 59
+
+Celda 11 [CODE]: 1617 caracteres
+
+Celda 12 [MARKDOWN]:
+  Título: ### 🧮 Análisis de patrones de missing values por categorías
+  Caracteres: 59
+
+Celda 13 [MARKDOWN]:
+  Título: ## 3️⃣ EXPLICACIÓN DEL SCRIPT DE LIMPIEZA
+  Caracteres: 96
+
+Celda 14 [CODE]: 1838 caracteres
+
+Celda 15 [MARKDOWN]:
+  Título: ### 🛠️ Funciones clave del script explicadas
+  Caracteres: 44
+
+Celda 16 [CODE]: 1777 caracteres
+
+Celda 17 [MARKDOWN]:
+  Título: ## 4️⃣ EJECUCIÓN DEL PROCESO DE LIMPIEZA
+  Caracteres: 83
+
+Celda 18 [CODE]: 2406 caracteres
+
+Celda 19 [MARKDOWN]:
+  Título: ## 5️⃣ ANÁLISIS DEL DATASET LIMPIO
+  Caracteres: 85
+
+Celda 20 [CODE]: 2007 caracteres
+
+Celda 21 [MARKDOWN]:
+  Título: ### 🔍 Visualización de las primeras 20 filas del dataset limpio
+  Caracteres: 63
+
+Celda 22 [MARKDOWN]:
+  Título: ### 🔢 ¿Por qué se codifican las variables categóricas?
+  Caracteres: 490
+  >> Contiene: encoding, categóricas
+
+Celda 23 [CODE]: 15539 caracteres
+
+Celda 24 [MARKDOWN]:
+  Título: ## 6️⃣ COMPARACIÓN ANTES VS DESPUÉS
+  Caracteres: 72
+
+Celda 25 [MARKDOWN]:
+  Título: ### 📈 Visualización de la mejora en completitud
+  Caracteres: 47
+
+Celda 26 [CODE]: 6999 caracteres
+
+Celda 27 [MARKDOWN]:
+  Título: ## 7️⃣ JUSTIFICACIÓN DE METODOLOGÍAS
+  Caracteres: 89
+
+Celda 28 [CODE]: 23180 caracteres
+
+Celda 29 [MARKDOWN]:
+  Título: ### 📊 Análisis de distribuciones antes y después
+  Caracteres: 48
+
+Celda 30 [CODE]: 3492 caracteres
+
+Celda 31 [MARKDOWN]:
+  Título: ## 8️⃣ CONCLUSIONES Y PRÓXIMOS PASOS
+  Caracteres: 85
+
+Celda 32 [CODE]: 2795 caracteres
+
+Celda 33 [MARKDOWN]:
+  Título: ## 🔄 TABLA COMPARATIVA LADO A LADO - ANTES vs DESPUÉS\n\n### 📊 Comparación directa de las primeras 2
+  Caracteres: 108
+
+Celda 34 [CODE]: 6918 caracteres
+
+Celda 35 [MARKDOWN]:
+  Título: ---
+  Caracteres: 604
+
+================================================================================
+CELDAS CON EXPLICACIONES CLAVE:
+================================================================================
