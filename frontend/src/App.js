@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
+import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { Bar } from 'react-chartjs-2';
+
+// Registrar componentes de Chart.js
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend);
 
 function App() {
   // Valores por defecto realistas para pruebas rápidas (paciente estable de referencia)
@@ -47,11 +52,21 @@ function App() {
     diabetes_mellitus: '0',
     immunosuppression: '0',
 
-    // Día 1 - Signos vitales estables
+    // Día 1 - Presión arterial (todas las variantes)
     d1_diasbp_max: 85,
     d1_diasbp_min: 65,
+    d1_diasbp_noninvasive_max: 85,
+    d1_diasbp_noninvasive_min: 65,
     d1_sysbp_max: 140,
     d1_sysbp_min: 110,
+    d1_sysbp_noninvasive_max: 140,
+    d1_sysbp_noninvasive_min: 110,
+    d1_mbp_max: 95,
+    d1_mbp_min: 75,
+    d1_mbp_noninvasive_max: 95,
+    d1_mbp_noninvasive_min: 75,
+
+    // Día 1 - Otros signos vitales
     d1_heartrate_max: 95,
     d1_heartrate_min: 65,
     d1_resprate_max: 22,
@@ -61,11 +76,37 @@ function App() {
     d1_temp_max: 37.5,
     d1_temp_min: 36.5,
 
+    // Hora 1 - Presión arterial (todas las variantes)
+    h1_diasbp_max: 82,
+    h1_diasbp_min: 68,
+    h1_diasbp_noninvasive_max: 82,
+    h1_diasbp_noninvasive_min: 68,
+    h1_sysbp_max: 135,
+    h1_sysbp_min: 115,
+    h1_sysbp_noninvasive_max: 135,
+    h1_sysbp_noninvasive_min: 115,
+    h1_mbp_max: 92,
+    h1_mbp_min: 78,
+    h1_mbp_noninvasive_max: 92,
+    h1_mbp_noninvasive_min: 78,
+
+    // Hora 1 - Otros signos vitales
+    h1_heartrate_max: 90,
+    h1_heartrate_min: 70,
+    h1_resprate_max: 20,
+    h1_resprate_min: 16,
+    h1_spo2_max: 99,
+    h1_spo2_min: 96,
+
     // Laboratorios - Valores normales
     d1_glucose_max: 140,
     d1_glucose_min: 90,
     d1_potassium_max: 4.5,
     d1_potassium_min: 3.8,
+
+    // Probabilidades Apache (valores bajos para paciente estable)
+    apache_4a_hospital_death_prob: 0.05,
+    apache_4a_icu_death_prob: 0.03,
 
     // Diagnósticos - Códigos comunes
     apache_2_diagnosis: 113,
@@ -80,6 +121,12 @@ function App() {
   const [modelInfo, setModelInfo] = useState(null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('predict');
+  const [selectedModel, setSelectedModel] = useState('xgboost'); // Modelo seleccionado por usuario
+  const [modelComparison, setModelComparison] = useState(null); // Comparación de modelos
+  const [modelParameters, setModelParameters] = useState(null); // Parámetros de modelos
+  const [trainingInfo, setTrainingInfo] = useState(null); // Info de entrenamiento
+  const [selectedModelsToTrain, setSelectedModelsToTrain] = useState(['random_forest', 'xgboost']); // Modelos a entrenar
+  const [testSize, setTestSize] = useState(0.2); // Train/test split
 
   // Casos predefinidos para pruebas rápidas
   const predefinedCases = {
@@ -219,7 +266,7 @@ function App() {
     }
   };
 
-  // Campos principales del formulario médico (84 columnas)
+  // TODAS las 87 columnas del dataset (exceptuando hospital_death que es el target)
   const medicalFields = [
     // Demográficos
     { name: 'age', label: 'Edad', type: 'number', required: true, min: 16, max: 120 },
@@ -267,11 +314,19 @@ function App() {
     { name: 'diabetes_mellitus', label: 'Diabetes Mellitus', type: 'select', options: ['0', '1'] },
     { name: 'immunosuppression', label: 'Inmunosupresión', type: 'select', options: ['0', '1'] },
 
-    // Día 1 - Presión arterial
+    // Día 1 - Presión arterial (TODAS las variantes)
     { name: 'd1_diasbp_max', label: 'Día 1 - Presión Diastólica Máx', type: 'number', min: 20, max: 200 },
     { name: 'd1_diasbp_min', label: 'Día 1 - Presión Diastólica Mín', type: 'number', min: 20, max: 200 },
+    { name: 'd1_diasbp_noninvasive_max', label: 'Día 1 - PD No Invasiva Máx', type: 'number', min: 20, max: 200 },
+    { name: 'd1_diasbp_noninvasive_min', label: 'Día 1 - PD No Invasiva Mín', type: 'number', min: 20, max: 200 },
     { name: 'd1_sysbp_max', label: 'Día 1 - Presión Sistólica Máx', type: 'number', min: 50, max: 300 },
     { name: 'd1_sysbp_min', label: 'Día 1 - Presión Sistólica Mín', type: 'number', min: 50, max: 300 },
+    { name: 'd1_sysbp_noninvasive_max', label: 'Día 1 - PS No Invasiva Máx', type: 'number', min: 50, max: 300 },
+    { name: 'd1_sysbp_noninvasive_min', label: 'Día 1 - PS No Invasiva Mín', type: 'number', min: 50, max: 300 },
+    { name: 'd1_mbp_max', label: 'Día 1 - Presión Media Máx', type: 'number', min: 20, max: 200 },
+    { name: 'd1_mbp_min', label: 'Día 1 - Presión Media Mín', type: 'number', min: 20, max: 200 },
+    { name: 'd1_mbp_noninvasive_max', label: 'Día 1 - PM No Invasiva Máx', type: 'number', min: 20, max: 200 },
+    { name: 'd1_mbp_noninvasive_min', label: 'Día 1 - PM No Invasiva Mín', type: 'number', min: 20, max: 200 },
 
     // Día 1 - Otros signos vitales
     { name: 'd1_heartrate_max', label: 'Día 1 - FC Máxima', type: 'number', min: 20, max: 300 },
@@ -283,11 +338,37 @@ function App() {
     { name: 'd1_temp_max', label: 'Día 1 - Temperatura Máx', type: 'number', min: 32, max: 45 },
     { name: 'd1_temp_min', label: 'Día 1 - Temperatura Mín', type: 'number', min: 32, max: 45 },
 
+    // Hora 1 - Presión arterial (TODAS las variantes)
+    { name: 'h1_diasbp_max', label: 'Hora 1 - Presión Diastólica Máx', type: 'number', min: 20, max: 200 },
+    { name: 'h1_diasbp_min', label: 'Hora 1 - Presión Diastólica Mín', type: 'number', min: 20, max: 200 },
+    { name: 'h1_diasbp_noninvasive_max', label: 'Hora 1 - PD No Invasiva Máx', type: 'number', min: 20, max: 200 },
+    { name: 'h1_diasbp_noninvasive_min', label: 'Hora 1 - PD No Invasiva Mín', type: 'number', min: 20, max: 200 },
+    { name: 'h1_sysbp_max', label: 'Hora 1 - Presión Sistólica Máx', type: 'number', min: 50, max: 300 },
+    { name: 'h1_sysbp_min', label: 'Hora 1 - Presión Sistólica Mín', type: 'number', min: 50, max: 300 },
+    { name: 'h1_sysbp_noninvasive_max', label: 'Hora 1 - PS No Invasiva Máx', type: 'number', min: 50, max: 300 },
+    { name: 'h1_sysbp_noninvasive_min', label: 'Hora 1 - PS No Invasiva Mín', type: 'number', min: 50, max: 300 },
+    { name: 'h1_mbp_max', label: 'Hora 1 - Presión Media Máx', type: 'number', min: 20, max: 200 },
+    { name: 'h1_mbp_min', label: 'Hora 1 - Presión Media Mín', type: 'number', min: 20, max: 200 },
+    { name: 'h1_mbp_noninvasive_max', label: 'Hora 1 - PM No Invasiva Máx', type: 'number', min: 20, max: 200 },
+    { name: 'h1_mbp_noninvasive_min', label: 'Hora 1 - PM No Invasiva Mín', type: 'number', min: 20, max: 200 },
+
+    // Hora 1 - Otros signos vitales
+    { name: 'h1_heartrate_max', label: 'Hora 1 - FC Máxima', type: 'number', min: 20, max: 300 },
+    { name: 'h1_heartrate_min', label: 'Hora 1 - FC Mínima', type: 'number', min: 20, max: 300 },
+    { name: 'h1_resprate_max', label: 'Hora 1 - FR Máxima', type: 'number', min: 5, max: 80 },
+    { name: 'h1_resprate_min', label: 'Hora 1 - FR Mínima', type: 'number', min: 5, max: 80 },
+    { name: 'h1_spo2_max', label: 'Hora 1 - SpO2 Máxima', type: 'number', min: 50, max: 100 },
+    { name: 'h1_spo2_min', label: 'Hora 1 - SpO2 Mínima', type: 'number', min: 50, max: 100 },
+
     // Laboratorios
     { name: 'd1_glucose_max', label: 'Día 1 - Glucosa Máx', type: 'number', min: 20, max: 1000 },
     { name: 'd1_glucose_min', label: 'Día 1 - Glucosa Mín', type: 'number', min: 20, max: 1000 },
     { name: 'd1_potassium_max', label: 'Día 1 - Potasio Máx', type: 'number', min: 1, max: 10 },
     { name: 'd1_potassium_min', label: 'Día 1 - Potasio Mín', type: 'number', min: 1, max: 10 },
+
+    // Probabilidades Apache (inputs del modelo)
+    { name: 'apache_4a_hospital_death_prob', label: 'Apache 4a - Prob Muerte Hospitalaria', type: 'number', min: 0, max: 1, step: 0.01 },
+    { name: 'apache_4a_icu_death_prob', label: 'Apache 4a - Prob Muerte UCI', type: 'number', min: 0, max: 1, step: 0.01 },
 
     // Diagnósticos Apache
     { name: 'apache_2_diagnosis', label: 'Diagnóstico Apache II', type: 'number', placeholder: 'Ej: 113' },
@@ -296,13 +377,13 @@ function App() {
       options: ['Cardiovascular', 'Respiratory', 'Neurological', 'Gastrointestinal', 'Metabolic', 'Hematological', 'Genitourinary', 'Trauma', 'Sepsis', 'Other'] },
     { name: 'apache_2_bodysystem', label: 'Sistema Corporal Apache II', type: 'select',
       options: ['Cardiovascular', 'Respiratory', 'Neurological', 'Gastrointestinal', 'Metabolic', 'Hematological', 'Genitourinary', 'Trauma', 'Sepsis', 'Other'] }
-
-    // NOTA: apache_4a_hospital_death_prob y apache_4a_icu_death_prob ELIMINADOS
-    // Estos son OUTPUTS del modelo Apache, no deben ser inputs para nuestro modelo
   ];
 
   useEffect(() => {
     loadModelInfo();
+    loadModelComparison();
+    loadModelParameters();
+    loadTrainingInfo();
   }, []);
 
   const loadModelInfo = async () => {
@@ -312,6 +393,42 @@ function App() {
       setModelInfo(data);
     } catch (error) {
       console.error('Error cargando info del modelo:', error);
+    }
+  };
+
+  const loadModelComparison = async () => {
+    try {
+      const response = await fetch('/api/model-comparison');
+      const data = await response.json();
+      if (data.status === 'success') {
+        setModelComparison(data);
+      }
+    } catch (error) {
+      console.error('Error cargando comparación de modelos:', error);
+    }
+  };
+
+  const loadModelParameters = async () => {
+    try {
+      const response = await fetch('/api/model-parameters');
+      const data = await response.json();
+      if (data.status === 'success') {
+        setModelParameters(data.parameters);
+      }
+    } catch (error) {
+      console.error('Error cargando parámetros de modelos:', error);
+    }
+  };
+
+  const loadTrainingInfo = async () => {
+    try {
+      const response = await fetch('/api/training-info');
+      const data = await response.json();
+      if (data.status === 'success') {
+        setTrainingInfo(data);
+      }
+    } catch (error) {
+      console.error('Error cargando info de entrenamiento:', error);
     }
   };
 
@@ -358,12 +475,18 @@ function App() {
     setPrediction(null);
 
     try {
+      // Enviar datos del paciente + modelo seleccionado
+      const requestData = {
+        ...formData,
+        model_name: selectedModel
+      };
+
       const response = await fetch('/api/predict', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(requestData),
       });
 
       const data = await response.json();
@@ -387,21 +510,43 @@ function App() {
     try {
       const response = await fetch('/api/train', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          models: selectedModelsToTrain,
+          test_size: testSize
+        }),
       });
 
       const data = await response.json();
 
       if (data.status === 'success') {
-        alert('¡Modelo entrenado exitosamente!');
+        alert(`¡Modelo(s) entrenado(s) exitosamente!\n\nModelos: ${data.modelo_info.modelos_entrenados.join(', ')}\nMejor modelo: ${data.modelo_info.mejor_modelo}`);
         loadModelInfo();
+        loadModelComparison();
+        loadTrainingInfo();
       } else {
-        setError(data.message || 'Error entrenando modelo');
+        setError(data.error || data.message || 'Error entrenando modelo');
       }
     } catch (error) {
-      setError('Error de conexión durante entrenamiento');
+      setError('Error de conexión durante entrenamiento: ' + error.message);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleModelToTrainChange = (modelName) => {
+    setSelectedModelsToTrain(prev => {
+      if (prev.includes(modelName)) {
+        // Si ya está seleccionado, quitarlo (si quedan otros)
+        const newSelection = prev.filter(m => m !== modelName);
+        return newSelection.length > 0 ? newSelection : prev; // Al menos uno debe estar seleccionado
+      } else {
+        // Si no está seleccionado, agregarlo
+        return [...prev, modelName];
+      }
+    });
   };
 
   const renderField = (field) => {
@@ -527,6 +672,134 @@ function App() {
     );
   };
 
+  // Renderizar comparación de modelos
+  const renderModelComparison = () => {
+    if (!modelComparison || !modelComparison.models_metrics) return null;
+
+    const metrics = modelComparison.models_metrics;
+    const modelNames = Object.keys(metrics);
+
+    if (modelNames.length < 2) return null;
+
+    // Datos para el gráfico de barras
+    const metricsData = {
+      labels: ['Accuracy', 'Precision', 'Recall', 'F1-Score', 'AUC-ROC'],
+      datasets: modelNames.map((modelName, index) => ({
+        label: modelName === 'random_forest' ? 'Random Forest' : 'XGBoost',
+        data: [
+          metrics[modelName].accuracy * 100,
+          metrics[modelName].precision * 100,
+          metrics[modelName].recall * 100,
+          metrics[modelName].f1_score * 100,
+          metrics[modelName].auc_roc * 100
+        ],
+        backgroundColor: index === 0 ? 'rgba(52, 152, 219, 0.6)' : 'rgba(231, 76, 60, 0.6)',
+        borderColor: index === 0 ? 'rgba(52, 152, 219, 1)' : 'rgba(231, 76, 60, 1)',
+        borderWidth: 1
+      }))
+    };
+
+    const chartOptions = {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: true,
+          text: 'Comparación de Métricas: Random Forest vs XGBoost'
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + '%';
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100,
+          ticks: {
+            callback: function(value) {
+              return value + '%';
+            }
+          }
+        }
+      }
+    };
+
+    return (
+      <div className="model-comparison-section">
+        <h3>📊 COMPARACIÓN DE MODELOS</h3>
+
+        <div className="comparison-chart">
+          <Bar data={metricsData} options={chartOptions} />
+        </div>
+
+        <div className="metrics-table">
+          <h4>📈 Tabla Comparativa de Métricas</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Métrica</th>
+                <th>Random Forest</th>
+                <th>XGBoost</th>
+                <th>Ganador</th>
+              </tr>
+            </thead>
+            <tbody>
+              {['accuracy', 'precision', 'recall', 'f1_score', 'auc_roc'].map(metric => {
+                const rf_value = metrics.random_forest[metric];
+                const xgb_value = metrics.xgboost[metric];
+                const winner = rf_value > xgb_value ? 'Random Forest' : 'XGBoost';
+                const metricName = metric === 'accuracy' ? 'Accuracy' :
+                                  metric === 'precision' ? 'Precision' :
+                                  metric === 'recall' ? 'Recall' :
+                                  metric === 'f1_score' ? 'F1-Score' : 'AUC-ROC';
+
+                return (
+                  <tr key={metric}>
+                    <td><strong>{metricName}</strong></td>
+                    <td className={winner === 'Random Forest' ? 'winner' : ''}>
+                      {(rf_value * 100).toFixed(2)}%
+                    </td>
+                    <td className={winner === 'XGBoost' ? 'winner' : ''}>
+                      {(xgb_value * 100).toFixed(2)}%
+                    </td>
+                    <td className="winner-badge">{winner}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="best-model-info">
+          <h4>🏆 MEJOR MODELO</h4>
+          <p>
+            <strong>{modelComparison.best_model === 'random_forest' ? 'Random Forest' : 'XGBoost'}</strong>
+          </p>
+          <small>
+            Seleccionado por mejor AUC-ROC (métrica más apropiada para datos desbalanceados)
+          </small>
+        </div>
+
+        <div className="interpretation-box">
+          <h4>💡 INTERPRETACIÓN DE MÉTRICAS</h4>
+          <ul>
+            <li><strong>Accuracy:</strong> Porcentaje de predicciones correctas (⚠️ puede ser engañoso con datos desbalanceados)</li>
+            <li><strong>Precision:</strong> De los que predijo "muerte", cuántos realmente murieron</li>
+            <li><strong>Recall:</strong> De los que murieron, cuántos detectó el modelo (MUY IMPORTANTE en medicina)</li>
+            <li><strong>F1-Score:</strong> Media armónica de Precision y Recall</li>
+            <li><strong>AUC-ROC:</strong> Capacidad de discriminación del modelo (0.5 = azar, 1.0 = perfecto)</li>
+          </ul>
+        </div>
+      </div>
+    );
+  };
+
   // Agrupar campos por categoría
   const fieldGroups = {
     'Datos Demográficos': medicalFields.filter(f =>
@@ -545,11 +818,23 @@ function App() {
     'Hospitalización': medicalFields.filter(f =>
       ['elective_surgery', 'apache_post_operative', 'icu_admit_source', 'icu_stay_type', 'icu_type', 'pre_icu_los_days'].includes(f.name)
     ),
-    'Signos Vitales Día 1': medicalFields.filter(f =>
-      f.name.startsWith('d1_') && !f.name.includes('glucose') && !f.name.includes('potassium')
+    'Presión Arterial - Día 1': medicalFields.filter(f =>
+      f.name.startsWith('d1_') && (f.name.includes('bp_') || f.name.includes('mbp_'))
+    ),
+    'Otros Signos Vitales - Día 1': medicalFields.filter(f =>
+      f.name.startsWith('d1_') && !f.name.includes('bp_') && !f.name.includes('mbp_') && !f.name.includes('glucose') && !f.name.includes('potassium')
+    ),
+    'Presión Arterial - Hora 1': medicalFields.filter(f =>
+      f.name.startsWith('h1_') && (f.name.includes('bp_') || f.name.includes('mbp_'))
+    ),
+    'Otros Signos Vitales - Hora 1': medicalFields.filter(f =>
+      f.name.startsWith('h1_') && !f.name.includes('bp_') && !f.name.includes('mbp_')
     ),
     'Laboratorios': medicalFields.filter(f =>
       f.name.includes('glucose') || f.name.includes('potassium')
+    ),
+    'Scores Apache (Probabilidades)': medicalFields.filter(f =>
+      f.name.includes('apache_4a_')
     ),
     'Diagnósticos Apache': medicalFields.filter(f =>
       ['apache_2_diagnosis', 'apache_3j_diagnosis', 'apache_3j_bodysystem', 'apache_2_bodysystem'].includes(f.name)
@@ -610,6 +895,39 @@ function App() {
 
                   {error && <div className="alert alert-danger">{error}</div>}
 
+                  {/* Selector de Modelo ML */}
+                  <div className="model-selector">
+                    <h4>🤖 Seleccionar Modelo de Machine Learning</h4>
+                    <div className="model-options">
+                      <label className="model-option">
+                        <input
+                          type="radio"
+                          name="model"
+                          value="random_forest"
+                          checked={selectedModel === 'random_forest'}
+                          onChange={(e) => setSelectedModel(e.target.value)}
+                        />
+                        <span className="model-label">
+                          <strong>Random Forest</strong>
+                          <small>Ensemble de árboles - Mayor precisión general</small>
+                        </span>
+                      </label>
+                      <label className="model-option">
+                        <input
+                          type="radio"
+                          name="model"
+                          value="xgboost"
+                          checked={selectedModel === 'xgboost'}
+                          onChange={(e) => setSelectedModel(e.target.value)}
+                        />
+                        <span className="model-label">
+                          <strong>XGBoost</strong>
+                          <small>Gradient Boosting - Mejor AUC-ROC (recomendado)</small>
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
                   <form onSubmit={handleSubmit}>
                     {Object.entries(fieldGroups).map(([groupName, fields]) => (
                       <div key={groupName} className="field-group">
@@ -651,30 +969,231 @@ function App() {
 
         {activeTab === 'model' && (
           <div className="model-tab">
-            <h2>🤖 Información del Modelo</h2>
+            <h2>🤖 Configuración y Entrenamiento de Modelos</h2>
 
-            <div className="model-actions">
-              <button
-                onClick={trainModel}
-                className="btn btn-success btn-lg"
-                disabled={isLoading}
-              >
-                {isLoading ? '🔄 Entrenando...' : '🚀 Entrenar Modelo'}
-              </button>
+            {error && <div className="alert alert-danger">{error}</div>}
+
+            {/* SECCIÓN 1: ENTRENAR MODELOS */}
+            <div className="training-section">
+              <h3>🚀 Entrenar Modelos de Machine Learning</h3>
+
+              <div className="training-config">
+                <div className="config-group">
+                  <h4>Seleccionar Modelos a Entrenar:</h4>
+                  <div className="model-checkboxes">
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={selectedModelsToTrain.includes('random_forest')}
+                        onChange={() => handleModelToTrainChange('random_forest')}
+                      />
+                      <span>🌳 Random Forest</span>
+                    </label>
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={selectedModelsToTrain.includes('xgboost')}
+                        onChange={() => handleModelToTrainChange('xgboost')}
+                      />
+                      <span>⚡ XGBoost</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="config-group">
+                  <h4>Configurar Train/Test Split:</h4>
+                  <div className="split-selector">
+                    <label>
+                      <input
+                        type="radio"
+                        name="split"
+                        checked={testSize === 0.2}
+                        onChange={() => setTestSize(0.2)}
+                      />
+                      <span>80% Train / 20% Test (Recomendado)</span>
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name="split"
+                        checked={testSize === 0.3}
+                        onChange={() => setTestSize(0.3)}
+                      />
+                      <span>70% Train / 30% Test</span>
+                    </label>
+                    <label>
+                      <input
+                        type="radio"
+                        name="split"
+                        checked={testSize === 0.25}
+                        onChange={() => setTestSize(0.25)}
+                      />
+                      <span>75% Train / 25% Test</span>
+                    </label>
+                  </div>
+                  <small className="text-muted">
+                    💡 El split 80/20 es el estándar de la industria. Más datos de entrenamiento = mejor modelo.
+                  </small>
+                </div>
+
+                <button
+                  onClick={trainModel}
+                  className="btn btn-success btn-lg"
+                  disabled={isLoading || selectedModelsToTrain.length === 0}
+                >
+                  {isLoading ? '🔄 Entrenando...' : `🚀 Entrenar ${selectedModelsToTrain.map(m => m === 'random_forest' ? 'RF' : 'XGB').join(' + ')}`}
+                </button>
+              </div>
             </div>
 
+            {/* SECCIÓN 2: INFORMACIÓN DEL DATASET Y FEATURES */}
+            {trainingInfo && (
+              <div className="dataset-info-section">
+                <h3>📊 Información del Dataset y Features</h3>
+
+                <div className="info-cards-grid">
+                  <div className="info-card">
+                    <h4>📈 Distribución de Datos</h4>
+                    {trainingInfo.training_info && (
+                      <>
+                        <p><strong>Total de muestras:</strong> {trainingInfo.training_info.total_samples}</p>
+                        <p><strong>Training set:</strong> {trainingInfo.training_info.train_samples} ({trainingInfo.training_info.train_percentage}%)</p>
+                        <p><strong>Test set:</strong> {trainingInfo.training_info.test_samples} ({trainingInfo.training_info.test_percentage}%)</p>
+                        <hr />
+                        <p><strong>Train - Muertes:</strong> {trainingInfo.training_info.train_deaths}</p>
+                        <p><strong>Train - Supervivientes:</strong> {trainingInfo.training_info.train_survivors}</p>
+                        <p><strong>Test - Muertes:</strong> {trainingInfo.training_info.test_deaths}</p>
+                        <p><strong>Test - Supervivientes:</strong> {trainingInfo.training_info.test_survivors}</p>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="info-card">
+                    <h4>🔢 Features Utilizadas</h4>
+                    {trainingInfo.features_info && (
+                      <>
+                        <p><strong>Total de features:</strong> {trainingInfo.features_info.total_features}</p>
+                        <details>
+                          <summary><strong>Ver lista completa de features ({trainingInfo.features_info.total_features})</strong></summary>
+                          <ul className="features-list">
+                            {trainingInfo.features_info.feature_names.map((feature, index) => (
+                              <li key={index}><code>{feature}</code></li>
+                            ))}
+                          </ul>
+                        </details>
+                        <hr />
+                        <p><strong>Features eliminadas del modelo:</strong></p>
+                        <ul>
+                          <li><code>ethnicity</code> (usamos ethnicity_encoded)</li>
+                          <li><code>gender</code> (usamos gender_encoded)</li>
+                          <li><code>icu_admit_source</code> (usamos icu_admit_source_encoded)</li>
+                          <li><code>icu_stay_type</code> (usamos icu_stay_type_encoded)</li>
+                          <li><code>icu_type</code> (usamos icu_type_encoded)</li>
+                          <li><code>apache_3j_bodysystem</code> (usamos apache_3j_bodysystem_encoded)</li>
+                          <li><code>apache_2_bodysystem</code> (usamos apache_2_bodysystem_encoded)</li>
+                          <li><code>apache_4a_hospital_death_prob</code> (output de otro modelo)</li>
+                          <li><code>apache_4a_icu_death_prob</code> (output de otro modelo)</li>
+                        </ul>
+                        <small className="text-muted">
+                          💡 Se eliminan variables categóricas originales y se usan sus versiones codificadas numéricamente.
+                          También se eliminan probabilidades Apache porque son outputs de otro modelo (evita data leakage).
+                        </small>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SECCIÓN 3: PARÁMETROS DE LOS MODELOS */}
+            {modelParameters && (
+              <div className="parameters-section">
+                <h3>⚙️ Parámetros y Justificación de Modelos</h3>
+
+                <div className="models-params-grid">
+                  {/* Random Forest */}
+                  <div className="model-params-card">
+                    <h4>🌳 {modelParameters.random_forest.name}</h4>
+                    <p className="model-description">{modelParameters.random_forest.description}</p>
+
+                    <h5>Parámetros:</h5>
+                    <table className="params-table">
+                      <thead>
+                        <tr>
+                          <th>Parámetro</th>
+                          <th>Valor</th>
+                          <th>Justificación</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(modelParameters.random_forest.parameters).map(([key, param]) => (
+                          <tr key={key}>
+                            <td><code>{key}</code></td>
+                            <td><strong>{param.value}</strong></td>
+                            <td>{param.justification}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    <h5>Ventajas:</h5>
+                    <ul>
+                      {modelParameters.random_forest.advantages.map((adv, idx) => (
+                        <li key={idx}>{adv}</li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* XGBoost */}
+                  <div className="model-params-card">
+                    <h4>⚡ {modelParameters.xgboost.name}</h4>
+                    <p className="model-description">{modelParameters.xgboost.description}</p>
+
+                    <h5>Parámetros:</h5>
+                    <table className="params-table">
+                      <thead>
+                        <tr>
+                          <th>Parámetro</th>
+                          <th>Valor</th>
+                          <th>Justificación</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(modelParameters.xgboost.parameters).map(([key, param]) => (
+                          <tr key={key}>
+                            <td><code>{key}</code></td>
+                            <td><strong>{param.value}</strong></td>
+                            <td>{param.justification}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    <h5>Ventajas:</h5>
+                    <ul>
+                      {modelParameters.xgboost.advantages.map((adv, idx) => (
+                        <li key={idx}>{adv}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SECCIÓN 4: ESTADO DEL MODELO ACTUAL */}
             {modelInfo && (
               <div className="model-info">
-                <h3>Estado del Modelo</h3>
+                <h3>📌 Estado del Modelo Actual</h3>
                 <div className="info-card">
                   <p><strong>Modelo Cargado:</strong> {modelInfo.model_loaded ? '✅ Sí' : '❌ No'}</p>
                   {modelInfo.model_loaded && (
                     <>
-                      <p><strong>Algoritmo:</strong> {modelInfo.algorithm}</p>
-                      <p><strong>Características:</strong> {modelInfo.features_count}</p>
+                      <p><strong>Mejor Algoritmo:</strong> {modelInfo.best_model}</p>
+                      <p><strong>Modelos Disponibles:</strong> {modelInfo.available_models && modelInfo.available_models.join(', ')}</p>
+                      <p><strong>Total de Features:</strong> {modelInfo.features_count}</p>
                       {modelInfo.top_features && (
                         <div className="top-features">
-                          <h4>Variables más importantes:</h4>
+                          <h4>Variables más importantes (del mejor modelo):</h4>
                           <ol>
                             {modelInfo.top_features.map((feature, index) => (
                               <li key={index}>
@@ -690,19 +1209,30 @@ function App() {
               </div>
             )}
 
+            {/* SECCIÓN 5: COMPARACIÓN DE MODELOS */}
+            {renderModelComparison()}
+
+            {/* SECCIÓN 6: INSTRUCCIONES */}
             <div className="instructions">
-              <h3>📖 Instrucciones de Uso</h3>
-              <ol>
-                <li><strong>Entrenar Modelo:</strong> Hacer clic en "Entrenar Modelo" (requiere dataset en data/dataset.csv)</li>
-                <li><strong>Completar Formulario:</strong> Ingresar los datos del paciente en la pestaña "Predicción"</li>
-                <li><strong>Obtener Resultados:</strong> El sistema genera 3 tipos de predicciones:
-                  <ul>
-                    <li><strong>Binaria:</strong> Sobrevive/Muere</li>
-                    <li><strong>Probabilidades:</strong> % específicos</li>
-                    <li><strong>Nivel de Riesgo:</strong> BAJO/MODERADO/ALTO/CRÍTICO + recomendaciones</li>
-                  </ul>
-                </li>
-              </ol>
+              <h3>📖 Guía de Uso - Entrega 3</h3>
+              <div className="instructions-grid">
+                <div className="instruction-card">
+                  <h4>1️⃣ Entrenar Modelos</h4>
+                  <p>Selecciona qué modelo(s) quieres entrenar y el split train/test. Recomendamos 80/20.</p>
+                </div>
+                <div className="instruction-card">
+                  <h4>2️⃣ Revisar Parámetros</h4>
+                  <p>Cada parámetro tiene su justificación técnica explicada arriba.</p>
+                </div>
+                <div className="instruction-card">
+                  <h4>3️⃣ Comparar Resultados</h4>
+                  <p>Usa la tabla y gráfico para comparar métricas de ambos modelos.</p>
+                </div>
+                <div className="instruction-card">
+                  <h4>4️⃣ Hacer Predicciones</h4>
+                  <p>Ve a la pestaña "Predicción" y elige qué modelo usar (RF o XGBoost).</p>
+                </div>
+              </div>
             </div>
           </div>
         )}

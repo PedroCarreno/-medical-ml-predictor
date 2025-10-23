@@ -4,7 +4,9 @@
   "description": "Frontend para Medical ML Predictor - Sistema de predicción de supervivencia en UCI",
   "private": true,
   "dependencies": {
+    "chart.js": "^4.5.1",
     "react": "^18.2.0",
+    "react-chartjs-2": "^5.3.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1"
   },
