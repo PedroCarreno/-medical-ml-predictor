@@ -141,12 +141,13 @@ class MLService:
 
         return True, "Datos válidos"
 
-    def predict_patient_outcome(self, patient_data: Dict[str, Any]) -> Dict[str, Any]:
+    def predict_patient_outcome(self, patient_data: Dict[str, Any], model_name: str = None) -> Dict[str, Any]:
         """
         Realizar predicción médica con las 3 salidas requeridas
 
         Args:
             patient_data: Diccionario con datos del paciente
+            model_name: 'random_forest', 'xgboost' o None (usa mejor modelo)
 
         Returns:
             Diccionario con las 3 predicciones
@@ -171,8 +172,8 @@ class MLService:
             }
 
         try:
-            # Hacer predicción usando el modelo entrenado con datos normalizados
-            prediction_result = self.predictor.predict_single_patient(normalized_data)
+            # Hacer predicción usando el modelo seleccionado (o el mejor)
+            prediction_result = self.predictor.predict_single_patient(normalized_data, model_name=model_name)
 
             # Formatear resultado según especificaciones
             return {
@@ -205,7 +206,7 @@ class MLService:
             }
 
     def get_model_info(self) -> Dict[str, Any]:
-        """Obtener información del modelo cargado"""
+        """Obtener información de todos los modelos disponibles"""
         # Intentar cargar modelo si no está cargado pero existe
         if not self.is_model_loaded():
             self.load_model()
@@ -217,16 +218,24 @@ class MLService:
             }
 
         try:
-            # Información básica del modelo
+            # Información básica
             info = {
                 'model_loaded': True,
-                'algorithm': self.predictor.best_model_name,
+                'best_model': self.predictor.best_model_name,
+                'available_models': self.predictor.get_available_models(),
                 'features_count': len(self.predictor.feature_columns),
-                'feature_names': self.predictor.feature_columns[:20],  # Primeras 20
+                'feature_names': self.predictor.feature_columns[:20],
                 'model_dir': self.model_dir
             }
 
-            # Importancia de características
+            # Métricas de evaluación si existen
+            if hasattr(self.predictor, 'evaluation_results'):
+                info['model_metrics'] = {}
+                for model_name, results in self.predictor.evaluation_results.items():
+                    if 'metrics' in results:
+                        info['model_metrics'][model_name] = results['metrics']
+
+            # Importancia de características para el mejor modelo
             if hasattr(self.predictor, 'get_feature_importance'):
                 importance = self.predictor.get_feature_importance()[:10]
                 info['top_features'] = [
@@ -381,6 +390,101 @@ class MLService:
             ])
 
         return base_recommendations + additional_recommendations
+
+    def get_models_comparison(self) -> Dict[str, Any]:
+        """Obtener comparación completa de todos los modelos con métricas y curvas ROC"""
+        if not self.is_model_loaded():
+            return {'error': 'Modelos no cargados'}
+
+        try:
+            comparison = {
+                'status': 'success',
+                'best_model': self.predictor.best_model_name,
+                'available_models': self.predictor.get_available_models(),
+                'models_metrics': {}
+            }
+
+            # Obtener métricas de evaluación si existen
+            if hasattr(self.predictor, 'evaluation_results'):
+                for model_name, results in self.predictor.evaluation_results.items():
+                    if 'metrics' in results:
+                        comparison['models_metrics'][model_name] = {
+                            'accuracy': float(results['metrics']['accuracy']),
+                            'precision': float(results['metrics']['precision']),
+                            'recall': float(results['metrics']['recall']),
+                            'f1_score': float(results['metrics']['f1_score']),
+                            'auc_roc': float(results['metrics']['auc_roc'])
+                        }
+
+                    # Agregar curva ROC si existe
+                    if 'probabilities' in results:
+                        # Las probabilidades se guardaron durante el entrenamiento
+                        # Aquí podríamos regenerar la curva ROC, pero por ahora solo enviamos las métricas
+                        pass
+
+            # Agregar importancia de variables para cada modelo
+            comparison['feature_importance'] = {}
+            for model_name in self.predictor.get_available_models():
+                importance = self.predictor.get_feature_importance(model_name)[:10]
+                comparison['feature_importance'][model_name] = [
+                    {'feature': str(feat), 'importance': float(imp)}
+                    for feat, imp in importance
+                ]
+
+            return comparison
+
+        except Exception as e:
+            logger.error(f"Error en comparación de modelos: {str(e)}")
+            return {
+                'error': 'Error generando comparación',
+                'message': str(e)
+            }
+
+    def compare_models_predictions(self, patient_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Comparar predicciones de TODOS los modelos para un paciente"""
+        if not self.is_model_loaded():
+            return {'error': 'Modelos no cargados'}
+
+        try:
+            # Normalizar datos primero
+            normalized_data = self.normalize_patient_data(patient_data)
+
+            # Validar datos
+            is_valid, message = self.validate_patient_data(normalized_data)
+            if not is_valid:
+                return {
+                    'error': 'Datos inválidos',
+                    'message': message
+                }
+
+            # Obtener predicciones de TODOS los modelos disponibles
+            predictions = {}
+            for model_name in self.predictor.get_available_models():
+                try:
+                    pred_result = self.predictor.predict_single_patient(normalized_data, model_name=model_name)
+                    predictions[model_name] = {
+                        'clasificacion_binaria': pred_result['salida_1_binaria'],
+                        'probabilidades': pred_result['salida_2_probabilidades'],
+                        'nivel_riesgo': pred_result['salida_3_riesgo']
+                    }
+                except Exception as e:
+                    logger.error(f"Error prediciendo con {model_name}: {str(e)}")
+                    predictions[model_name] = {'error': str(e)}
+
+            return {
+                'status': 'success',
+                'patient_data': normalized_data,
+                'predictions': predictions,
+                'best_model': self.predictor.best_model_name,
+                'timestamp': pd.Timestamp.now().isoformat()
+            }
+
+        except Exception as e:
+            logger.error(f"Error comparando predicciones: {str(e)}")
+            return {
+                'error': 'Error en comparación',
+                'message': str(e)
+            }
 
 # Instancia global del servicio
 ml_service = MLService()

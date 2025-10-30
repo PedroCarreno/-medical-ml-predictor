@@ -116,7 +116,7 @@ def dataset_info():
 
 @app.route('/api/predict', methods=['POST'])
 def predict():
-    """Realizar predicción médica - LAS 3 SALIDAS"""
+    """Realizar predicción médica - LAS 3 SALIDAS + selección de modelo"""
     from services.ml_service import ml_service
 
     try:
@@ -128,6 +128,10 @@ def predict():
                 'status': 'error'
             }), 400
 
+        # Extraer modelo seleccionado (si existe)
+        selected_model = data.pop('model_name', None)
+        logger.info(f"Modelo seleccionado por usuario: {selected_model}")
+
         # Cargar modelo si no está cargado
         if not ml_service.is_model_loaded():
             model_loaded = ml_service.load_model()
@@ -138,8 +142,8 @@ def predict():
                     'status': 'error'
                 }), 400
 
-        # Realizar predicción con las 3 salidas
-        prediction_result = ml_service.predict_patient_outcome(data)
+        # Realizar predicción con el modelo seleccionado
+        prediction_result = ml_service.predict_patient_outcome(data, model_name=selected_model)
 
         return jsonify(prediction_result)
 
@@ -152,7 +156,15 @@ def predict():
 
 @app.route('/api/train', methods=['POST'])
 def train_model():
-    """Entrenar modelo ML"""
+    """
+    Entrenar modelos ML específicos o todos
+
+    Body (JSON):
+    {
+        "models": ["random_forest", "xgboost"],  // opcional, por defecto entrena ambos
+        "test_size": 0.2  // opcional, por defecto 0.2 (20% test, 80% train)
+    }
+    """
     try:
         # Importar función de entrenamiento
         import sys
@@ -164,30 +176,50 @@ def train_model():
 
         from ml_service.train_model import train_medical_model
 
-        logger.info("🏥 Iniciando entrenamiento del modelo...")
+        # Obtener parámetros de entrenamiento
+        data = request.get_json() if request.get_json() else {}
+        models_to_train = data.get('models', None)  # None = entrenar todos
+        test_size = data.get('test_size', 0.2)
+
+        logger.info(f"🏥 Iniciando entrenamiento - Modelos: {models_to_train}, Test Size: {test_size}")
 
         # Entrenar modelo
-        predictor = train_medical_model()
+        predictor = train_medical_model(models_to_train=models_to_train, test_size=test_size)
 
         logger.info("✅ Modelo entrenado exitosamente")
 
-        return jsonify({
+        # Preparar respuesta con métricas
+        response = {
             'status': 'success',
-            'message': 'Modelo entrenado exitosamente',
+            'message': 'Modelo(s) entrenado(s) exitosamente',
             'modelo_info': {
-                'algoritmo_seleccionado': predictor.best_model_name,
-                'features_utilizadas': len(predictor.feature_columns),
-                'modelos_evaluados': list(predictor.models.keys())
-            },
-            'siguiente_paso': 'Ya puedes hacer predicciones usando /api/predict'
-        })
+                'mejor_modelo': predictor.best_model_name,
+                'modelos_entrenados': list(predictor.models.keys()),
+                'features_utilizadas': len(predictor.feature_columns)
+            }
+        }
+
+        # Agregar info de training si existe
+        if hasattr(predictor, 'training_info'):
+            response['training_info'] = predictor.training_info
+
+        # Agregar métricas de evaluación si existen
+        if hasattr(predictor, 'evaluation_results'):
+            response['metricas'] = {}
+            for model_name, results in predictor.evaluation_results.items():
+                if 'metrics' in results:
+                    response['metricas'][model_name] = results['metrics']
+
+        return jsonify(response)
 
     except Exception as e:
         logger.error(f"Error entrenando modelo: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({
             'error': f'Error entrenando modelo: {str(e)}',
             'status': 'error',
-            'solucion': 'Verificar que el dataset esté en data/dataset.csv'
+            'solucion': 'Verificar que el dataset esté en PRESENTACION/dataset_clean_final.csv'
         }), 500
 
 @app.route('/api/predict-batch', methods=['POST'])
@@ -269,6 +301,115 @@ def predict_with_explanation():
         logger.error(f"Error en explicación: {str(e)}")
         return jsonify({
             'error': f'Error en explicación: {str(e)}'
+        }), 500
+
+@app.route('/api/model-comparison', methods=['GET'])
+def get_model_comparison():
+    """Obtener comparación completa de ambos modelos con curvas ROC"""
+    from services.ml_service import ml_service
+
+    try:
+        if not ml_service.is_model_loaded():
+            ml_service.load_model()
+
+        comparison = ml_service.get_models_comparison()
+        return jsonify(comparison)
+
+    except Exception as e:
+        logger.error(f"Error en comparación de modelos: {str(e)}")
+        return jsonify({
+            'error': f'Error en comparación: {str(e)}',
+            'status': 'error'
+        }), 500
+
+@app.route('/api/compare-predictions', methods=['POST'])
+def compare_predictions():
+    """Comparar predicciones de ambos modelos para un paciente"""
+    from services.ml_service import ml_service
+
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({
+                'error': 'No se enviaron datos para predicción'
+            }), 400
+
+        # Cargar modelo si es necesario
+        if not ml_service.is_model_loaded():
+            ml_service.load_model()
+
+        # Obtener predicciones de ambos modelos
+        comparison = ml_service.compare_models_predictions(data)
+
+        return jsonify(comparison)
+
+    except Exception as e:
+        logger.error(f"Error en comparación de predicciones: {str(e)}")
+        return jsonify({
+            'error': f'Error en comparación: {str(e)}'
+        }), 500
+
+@app.route('/api/model-parameters', methods=['GET'])
+def get_model_parameters():
+    """Obtener información detallada de parámetros de cada modelo"""
+    try:
+        import sys
+        import os
+
+        app_root = '/app' if os.path.exists('/app/ml_service') else os.path.dirname(os.path.dirname(__file__))
+        sys.path.append(app_root)
+
+        from ml_service.train_model import get_model_parameters_info
+
+        parameters_info = get_model_parameters_info()
+
+        return jsonify({
+            'status': 'success',
+            'parameters': parameters_info
+        })
+
+    except Exception as e:
+        logger.error(f"Error obteniendo parámetros: {str(e)}")
+        return jsonify({
+            'error': f'Error obteniendo parámetros: {str(e)}'
+        }), 500
+
+@app.route('/api/training-info', methods=['GET'])
+def get_training_info():
+    """Obtener información detallada del último entrenamiento"""
+    from services.ml_service import ml_service
+
+    try:
+        if not ml_service.is_model_loaded():
+            ml_service.load_model()
+
+        if not ml_service.is_model_loaded():
+            return jsonify({
+                'error': 'No hay modelo entrenado'
+            }), 404
+
+        # Obtener info de training
+        training_info = {}
+        if hasattr(ml_service.predictor, 'training_info'):
+            training_info = ml_service.predictor.training_info
+
+        # Obtener features usadas
+        features_info = {
+            'total_features': len(ml_service.predictor.feature_columns) if ml_service.predictor.feature_columns else 0,
+            'feature_names': ml_service.predictor.feature_columns if ml_service.predictor.feature_columns else []
+        }
+
+        return jsonify({
+            'status': 'success',
+            'training_info': training_info,
+            'features_info': features_info
+        })
+
+    except Exception as e:
+        logger.error(f"Error obteniendo info de entrenamiento: {str(e)}")
+        return jsonify({
+            'error': f'Error obteniendo info: {str(e)}'
         }), 500
 
 if __name__ == '__main__':

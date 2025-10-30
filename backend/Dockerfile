@@ -21,6 +21,9 @@ COPY backend/ .
 # Copiar ml_service
 COPY ml_service/ ./ml_service/
 
+# Copiar dataset limpio al directorio raíz del backend
+COPY backend/dataset_clean_final.csv ./
+
 # Exponer puerto
 EXPOSE 8000
 
