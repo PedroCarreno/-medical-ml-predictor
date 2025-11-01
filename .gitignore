@@ -243,7 +243,7 @@ Dataset-Info.pdf
 # Archivos de configuración temporal
 .claude/
 
-dataset_balanced_smote_tomek.csv
+notebooks/dataset_balanced_smote_tomek.csv
 
 # Documentación generada automáticamente que no corresponde al proyecto
 docs/nul
